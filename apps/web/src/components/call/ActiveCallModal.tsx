@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { PhoneOff, Mic, MicOff, Volume2, VolumeX, Globe, Radio, ShieldCheck } from 'lucide-react';
 import { useCall } from '../../context/CallContext';
 
@@ -12,8 +12,75 @@ export const ActiveCallModal: React.FC = () => {
     durationSeconds,
     toggleMute,
     toggleSpeaker,
-    endCall
+    endCall,
+    localStream,
+    remoteStream
   } = useCall();
+
+  const [visualizerLevels, setVisualizerLevels] = useState<number[]>([25, 45, 70, 90, 65, 80, 50, 40, 20]);
+  const animationFrameRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Dynamic Audio Analyser connected to live MediaStream
+  useEffect(() => {
+    if (callState !== 'CONNECTED') return;
+
+    const stream = remoteStream || localStream;
+    if (!stream || isMuted) {
+      setVisualizerLevels([10, 10, 10, 10, 10, 10, 10, 10, 10]);
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const audioCtx = new AudioCtx();
+      audioContextRef.current = audioCtx;
+
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.6;
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateFrequencies = () => {
+        analyser.getByteFrequencyData(dataArray);
+
+        // Sample 9 bands across the voice range
+        const step = Math.floor(bufferLength / 9) || 1;
+        const newLevels = [];
+        for (let i = 0; i < 9; i++) {
+          const val = dataArray[i * step] || 0;
+          // Scale from 0-255 to 15-100%
+          const percent = Math.max(15, Math.min(100, Math.round((val / 255) * 100)));
+          newLevels.push(percent);
+        }
+
+        setVisualizerLevels(newLevels);
+        animationFrameRef.current = requestAnimationFrame(updateFrequencies);
+      };
+
+      updateFrequencies();
+    } catch (e) {
+      console.warn('Audio analyser error:', e);
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
+    };
+  }, [callState, localStream, remoteStream, isMuted]);
 
   if (callState !== 'CONNECTED' || !currentCall) return null;
 
@@ -71,15 +138,17 @@ export const ActiveCallModal: React.FC = () => {
           {formatTime(durationSeconds)}
         </div>
 
-        {/* Dynamic Audio Visualizer Bars */}
-        <div className="flex items-center justify-center space-x-1.5 h-8 mb-6">
-          {[40, 70, 95, 60, 80, 50, 90, 65, 45].map((heightPercent, idx) => (
+        {/* Dynamic Voice Visualizer Bars */}
+        <div className="flex items-center justify-center space-x-1.5 h-10 mb-6 px-4">
+          {visualizerLevels.map((heightPercent, idx) => (
             <div
               key={idx}
-              className="w-1 bg-emerald-400 rounded-full transition-all duration-300 animate-pulse"
+              className={`w-1.5 rounded-full transition-all duration-75 ${
+                isMuted ? 'bg-rose-500/50' : 'bg-emerald-400'
+              }`}
               style={{
                 height: isMuted ? '4px' : `${heightPercent}%`,
-                animationDelay: `${idx * 120}ms`
+                boxShadow: isMuted ? 'none' : '0 0 8px rgba(16, 185, 129, 0.5)'
               }}
             ></div>
           ))}
@@ -152,4 +221,3 @@ export const ActiveCallModal: React.FC = () => {
     </div>
   );
 };
-

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
 import { config } from './config';
 import { generalRateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
@@ -70,6 +72,19 @@ export function createApp() {
   app.use('/api/wallet', walletRoutes);
   app.use('/api/telephony', telephonyRoutes);
   app.use('/api/admin', adminRoutes);
+
+  // In production, serve the frontend single-page application from apps/web/dist
+  const webDistPath = path.resolve(__dirname, '../../web/dist');
+  if (fs.existsSync(webDistPath)) {
+    console.log(`[NetCall] Serving production web client from: ${webDistPath}`);
+    app.use(express.static(webDistPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+        return next();
+      }
+      res.sendFile(path.join(webDistPath, 'index.html'));
+    });
+  }
 
   // 404 Handler
   app.use((req, res) => {
