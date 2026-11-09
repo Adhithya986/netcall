@@ -12,7 +12,8 @@ import {
   Radio,
   Clock,
   ArrowRight,
-  Filter
+  Filter,
+  Download
 } from 'lucide-react';
 
 export const HistoryPage: React.FC = () => {
@@ -23,6 +24,37 @@ export const HistoryPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'ALL' | CallType>('ALL');
+
+  const exportToCSV = () => {
+    if (calls.length === 0) return;
+    const headers = ['Date', 'Call ID', 'Type', 'Status', 'Contact', 'Duration (Seconds)', 'Cost (INR)'];
+    const rows = calls.map((c) => {
+      const isCaller = c.callerId === user?.id;
+      const contact = c.callType === 'TELECOM_PSTN'
+        ? c.destinationNumber
+        : isCaller
+        ? c.receiverName || c.receiverUsername || 'User'
+        : c.callerName;
+      return [
+        new Date(c.startedAt).toISOString(),
+        c.callId,
+        c.callType,
+        c.status,
+        `"${contact || ''}"`,
+        c.durationSeconds,
+        (c.costPaise / 100).toFixed(2)
+      ].join(',');
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `netcall_call_history_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   const fetchCalls = async (pageNum: number) => {
     setLoading(true);
@@ -90,38 +122,50 @@ export const HistoryPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Filter buttons */}
-        <div className="bg-navy-900 border border-navy-800 p-1 rounded-xl flex items-center space-x-1 text-xs font-semibold">
+        {/* Filter & Export buttons */}
+        <div className="flex items-center space-x-2">
           <button
-            onClick={() => setFilterType('ALL')}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              filterType === 'ALL'
-                ? 'bg-emerald-500 text-navy-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
+            onClick={exportToCSV}
+            disabled={calls.length === 0}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-navy-900 hover:bg-navy-800 border border-navy-800 text-slate-300 hover:text-emerald-400 text-xs font-semibold transition-colors disabled:opacity-40"
+            title="Download Call History as CSV"
           >
-            All Calls
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Export CSV</span>
           </button>
-          <button
-            onClick={() => setFilterType('INTERNET_WEBRTC')}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              filterType === 'INTERNET_WEBRTC'
-                ? 'bg-emerald-500 text-navy-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Internet
-          </button>
-          <button
-            onClick={() => setFilterType('TELECOM_PSTN')}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              filterType === 'TELECOM_PSTN'
-                ? 'bg-emerald-500 text-navy-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            PSTN Telecom
-          </button>
+
+          <div className="bg-navy-900 border border-navy-800 p-1 rounded-xl flex items-center space-x-1 text-xs font-semibold">
+            <button
+              onClick={() => setFilterType('ALL')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filterType === 'ALL'
+                  ? 'bg-emerald-500 text-navy-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Calls
+            </button>
+            <button
+              onClick={() => setFilterType('INTERNET_WEBRTC')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filterType === 'INTERNET_WEBRTC'
+                  ? 'bg-emerald-500 text-navy-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Internet
+            </button>
+            <button
+              onClick={() => setFilterType('TELECOM_PSTN')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filterType === 'TELECOM_PSTN'
+                  ? 'bg-emerald-500 text-navy-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              PSTN Telecom
+            </button>
+          </div>
         </div>
       </div>
 
