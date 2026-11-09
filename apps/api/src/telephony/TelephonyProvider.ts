@@ -36,3 +36,4 @@ export interface ITelephonyProvider {
    */
   parseWebhookPayload(payload: any): TelephonyStatusCallback;
 }
+

@@ -73,3 +73,4 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response,
 });
 
 export default router;
+

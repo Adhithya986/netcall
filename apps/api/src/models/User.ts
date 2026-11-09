@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { UserRole, UserStatus } from '@netcall/shared';
+import { isDatabaseInMemory } from '../db/connection';
+import { MemoryUserDoc, MemoryUserOperations } from '../db/memoryStore';
 
 export interface IUser extends Document {
   email: string;
@@ -76,4 +78,21 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-export const User = mongoose.model<IUser>('User', UserSchema);
+const MongooseUserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+
+export const User: any = new Proxy(MongooseUserModel, {
+  construct(target, args) {
+    if (isDatabaseInMemory()) {
+      return new MemoryUserDoc(args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop, receiver) {
+    if (isDatabaseInMemory()) {
+      if (prop in MemoryUserOperations) {
+        return (MemoryUserOperations as any)[prop];
+      }
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});

@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { TransactionType, TransactionStatus } from '@netcall/shared';
+import { isDatabaseInMemory } from '../db/connection';
+import { MemoryLedgerDoc, MemoryLedgerOperations } from '../db/memoryStore';
 
 export interface ITransactionLedger extends Document {
   transactionId: string;
-  userId: mongoose.Types.ObjectId;
-  walletId: mongoose.Types.ObjectId;
+  userId: any;
+  walletId: any;
   type: TransactionType;
   amountPaise: number;
   balanceBeforePaise: number;
@@ -77,7 +79,24 @@ const TransactionLedgerSchema = new Schema<ITransactionLedger>(
 
 TransactionLedgerSchema.index({ userId: 1, createdAt: -1 });
 
-export const TransactionLedger = mongoose.model<ITransactionLedger>(
+const MongooseLedgerModel = mongoose.models.TransactionLedger || mongoose.model<ITransactionLedger>(
   'TransactionLedger',
   TransactionLedgerSchema
 );
+
+export const TransactionLedger: any = new Proxy(MongooseLedgerModel, {
+  construct(target, args) {
+    if (isDatabaseInMemory()) {
+      return new MemoryLedgerDoc(args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop, receiver) {
+    if (isDatabaseInMemory()) {
+      if (prop in MemoryLedgerOperations) {
+        return (MemoryLedgerOperations as any)[prop];
+      }
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});

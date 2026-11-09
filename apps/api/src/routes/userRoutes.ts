@@ -27,7 +27,7 @@ router.get('/search', authenticate, async (req: AuthenticatedRequest, res: Respo
 
     res.json({
       success: true,
-      data: users.map(u => ({
+      data: users.map((u: any) => ({
         id: u._id.toString(),
         username: u.username,
         fullName: u.fullName,
@@ -78,3 +78,4 @@ router.put('/profile', authenticate, async (req: AuthenticatedRequest, res: Resp
 });
 
 export default router;
+

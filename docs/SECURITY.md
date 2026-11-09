@@ -53,3 +53,4 @@
   - Calls are only billed when billable carrier duration has been verified. Failed or uncompleted calls incur zero cost.
 - **Secret Isolation:**
   - Zero hardcoded credentials or API keys in client code or Git repository. Environment variables template strictly preserved in `.env.example`.
+

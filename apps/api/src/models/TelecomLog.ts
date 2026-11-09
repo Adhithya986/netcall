@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { isDatabaseInMemory } from '../db/connection';
+import { MemoryTelecomLogOperations } from '../db/memoryStore';
 
 export interface ITelecomLog extends Document {
   callId: string;
@@ -55,4 +57,18 @@ const TelecomLogSchema = new Schema<ITelecomLog>(
   }
 );
 
-export const TelecomLog = mongoose.model<ITelecomLog>('TelecomLog', TelecomLogSchema);
+const MongooseTelecomLogModel = mongoose.models.TelecomLog || mongoose.model<ITelecomLog>('TelecomLog', TelecomLogSchema);
+
+export const TelecomLog: any = new Proxy(MongooseTelecomLogModel, {
+  construct(target, args) {
+    return new target(...args);
+  },
+  get(target, prop, receiver) {
+    if (isDatabaseInMemory()) {
+      if (prop in MemoryTelecomLogOperations) {
+        return (MemoryTelecomLogOperations as any)[prop];
+      }
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});

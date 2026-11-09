@@ -92,3 +92,4 @@ describe('Authentication & User Management API', () => {
     expect(res.body.data.email).toBe(testUser.email);
   });
 });
+

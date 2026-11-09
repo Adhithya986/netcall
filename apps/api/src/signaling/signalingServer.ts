@@ -251,3 +251,4 @@ export class SignalingServer {
     return Boolean(sockets && sockets.size > 0);
   }
 }
+

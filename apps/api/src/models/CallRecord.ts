@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { CallType, CallStatus } from '@netcall/shared';
+import { isDatabaseInMemory } from '../db/connection';
+import { MemoryCallRecordDoc, MemoryCallRecordOperations } from '../db/memoryStore';
 
 export interface ICallRecord extends Document {
   callId: string;
-  callerId: mongoose.Types.ObjectId;
-  receiverId?: mongoose.Types.ObjectId;
+  callerId: any;
+  receiverId?: any;
   destinationNumber?: string;
   callType: CallType;
   status: CallStatus;
@@ -18,6 +20,7 @@ export interface ICallRecord extends Document {
   metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
+  populate(field: string, select?: string): Promise<this>;
 }
 
 const CallRecordSchema = new Schema<ICallRecord>(
@@ -101,4 +104,21 @@ const CallRecordSchema = new Schema<ICallRecord>(
 CallRecordSchema.index({ callerId: 1, startedAt: -1 });
 CallRecordSchema.index({ receiverId: 1, startedAt: -1 });
 
-export const CallRecord = mongoose.model<ICallRecord>('CallRecord', CallRecordSchema);
+const MongooseCallRecordModel = mongoose.models.CallRecord || mongoose.model<ICallRecord>('CallRecord', CallRecordSchema);
+
+export const CallRecord: any = new Proxy(MongooseCallRecordModel, {
+  construct(target, args) {
+    if (isDatabaseInMemory()) {
+      return new MemoryCallRecordDoc(args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop, receiver) {
+    if (isDatabaseInMemory()) {
+      if (prop in MemoryCallRecordOperations) {
+        return (MemoryCallRecordOperations as any)[prop];
+      }
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});

@@ -87,3 +87,4 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
 
 export const TELECOM_COMPLIANCE_DISCLAIMER = 
   'Indian Telecom Notice: Under DoT & TRAI guidelines, VoIP-to-PSTN calling requires licensed carrier interconnect. In this environment, NetCall runs in verified Mock Sandbox Mode unless production DoT-approved carrier credentials (e.g., Airtel IQ, Exotel, Tata Tele) are configured.';
+

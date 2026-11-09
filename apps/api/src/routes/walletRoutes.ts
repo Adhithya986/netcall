@@ -72,3 +72,4 @@ router.get('/transactions', authenticate, async (req: AuthenticatedRequest, res:
 });
 
 export default router;
+

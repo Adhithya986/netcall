@@ -338,3 +338,4 @@ project-money/
 3. **CORS & CSP:** Cross-Origin Resource Sharing strictly allows designated origins; Content Security Policy restricts audio stream sources and socket connections.
 4. **Signaling Authorization:** Users can only signal peers in rooms they have been actively invited to or initiated.
 5. **Rate Limiting:** IP-based and user-based sliding window rate limits protect login, registration, and call initiation endpoints against brute-force attacks and denial-of-service.
+

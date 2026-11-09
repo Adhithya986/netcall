@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { isDatabaseInMemory } from '../db/connection';
+import { MemoryWalletDoc, MemoryWalletOperations } from '../db/memoryStore';
 
 export interface IWallet extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: any;
   balancePaise: number;
   currency: string;
   isDemo: boolean;
@@ -38,4 +40,21 @@ const WalletSchema = new Schema<IWallet>(
   }
 );
 
-export const Wallet = mongoose.model<IWallet>('Wallet', WalletSchema);
+const MongooseWalletModel = mongoose.models.Wallet || mongoose.model<IWallet>('Wallet', WalletSchema);
+
+export const Wallet: any = new Proxy(MongooseWalletModel, {
+  construct(target, args) {
+    if (isDatabaseInMemory()) {
+      return new MemoryWalletDoc(args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop, receiver) {
+    if (isDatabaseInMemory()) {
+      if (prop in MemoryWalletOperations) {
+        return (MemoryWalletOperations as any)[prop];
+      }
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});

@@ -213,3 +213,4 @@ project-money/
 ## ⚖️ License & Disclaimers
 
 NetCall is developed as a production-oriented architectural platform. Outbound termination to Indian cellular phones in live environments requires commercial contracts with DoT-licensed Indian Telecom Service Providers (TSPs) and strict adherence to TRAI TCCCPR anti-spam regulations.
+

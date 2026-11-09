@@ -79,3 +79,4 @@ export type InitiateCallInput = z.infer<typeof initiateCallSchema>;
 export type TopUpWalletInput = z.infer<typeof topUpWalletSchema>;
 export type SearchUserInput = z.infer<typeof searchUserSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+

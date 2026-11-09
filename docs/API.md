@@ -127,3 +127,4 @@ Returns configured STUN and TURN server array for WebRTC `RTCPeerConnection`.
 | `call:mute-toggle`| Client <-> Room | `{ callId, isMuted }` | Syncs microphone mute state |
 | `call:hangup` | Client <-> Room | `{ callId, reason }` | Concludes active call |
 | `call:ended` | Server -> Room | `{ callId, reason }` | Notifies peers of teardown |
+

@@ -33,3 +33,4 @@ RUN npm ci --omit=dev
 EXPOSE 5000
 
 CMD ["node", "apps/api/dist/index.js"]
+

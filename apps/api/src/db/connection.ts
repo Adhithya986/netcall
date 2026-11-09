@@ -1,49 +1,39 @@
 import mongoose from 'mongoose';
 import { config } from '../config';
 
-let mongodInstance: any = null;
+let isInMemoryMode = false;
 
-export async function connectDB(): Promise<typeof mongoose> {
-  // If explicitly requested or in test mode, try in-memory server first
+export function isDatabaseInMemory(): boolean {
+  return isInMemoryMode || mongoose.connection.readyState !== 1;
+}
+
+export async function connectDB(): Promise<typeof mongoose | null> {
+  // If explicitly requested or in test mode without external URI
   if (config.mongodb.useInMemory) {
-    try {
-      const { MongoMemoryServer } = await import('mongodb-memory-server');
-      mongodInstance = await MongoMemoryServer.create();
-      const inMemoryUri = mongodInstance.getUri();
-      console.log(`[Database] Using in-memory MongoDB at ${inMemoryUri}`);
-      return await mongoose.connect(inMemoryUri);
-    } catch (inMemErr) {
-      console.warn('[Database] In-memory MongoDB failed to start, falling back to configured URI...', inMemErr);
-    }
+    console.log('[Database] USE_IN_MEMORY_DB=true. Activated NetCall Zero-Dependency In-Memory Database.');
+    isInMemoryMode = true;
+    return null;
   }
 
   try {
-    console.log(`[Database] Attempting connection to MongoDB at: ${config.mongodb.uri}`);
+    console.log(`[Database] Attempting connection to MongoDB at: ${config.mongodb.uri} (timeout: 2s)...`);
     const conn = await mongoose.connect(config.mongodb.uri, {
-      serverSelectionTimeoutMS: 4000
+      serverSelectionTimeoutMS: 2000
     });
     console.log('[Database] Connected to external MongoDB successfully.');
+    isInMemoryMode = false;
     return conn;
   } catch (error) {
-    console.warn('[Database] Could not connect to external MongoDB. Attempting fallback to MongoMemoryServer...');
-    try {
-      const { MongoMemoryServer } = await import('mongodb-memory-server');
-      mongodInstance = await MongoMemoryServer.create();
-      const fallbackUri = mongodInstance.getUri();
-      console.log(`[Database] Fallback in-memory MongoDB initialized at: ${fallbackUri}`);
-      return await mongoose.connect(fallbackUri);
-    } catch (fallbackError) {
-      console.error('[Database] Fatal: Unable to initialize any MongoDB connection.', fallbackError);
-      throw error;
-    }
+    console.warn('[Database] External MongoDB is not running locally.');
+    console.log('[Database] 🚀 Activated NetCall Zero-Dependency In-Memory Database. Ready immediately.');
+    isInMemoryMode = true;
+    return null;
   }
 }
 
 export async function disconnectDB(): Promise<void> {
-  await mongoose.disconnect();
-  if (mongodInstance) {
-    await mongodInstance.stop();
-    mongodInstance = null;
+  if (mongoose.connection.readyState === 1) {
+    await mongoose.disconnect();
+    console.log('[Database] Disconnected from MongoDB.');
   }
-  console.log('[Database] Disconnected from MongoDB.');
 }

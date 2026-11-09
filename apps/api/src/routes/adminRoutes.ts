@@ -29,10 +29,10 @@ router.get('/stats', async (req: AuthenticatedRequest, res: Response, next) => {
       ])
     ]);
 
-    const totalDurationSeconds = completedCalls.reduce((acc, c) => acc + (c.durationSeconds || 0), 0);
-    const totalRevenuePaise = completedCalls.reduce((acc, c) => acc + (c.costPaise || 0), 0);
-    const webrtcCallsCount = completedCalls.filter(c => c.callType === 'INTERNET_WEBRTC').length;
-    const pstnCallsCount = completedCalls.filter(c => c.callType === 'TELECOM_PSTN').length;
+    const totalDurationSeconds = completedCalls.reduce((acc: number, c: any) => acc + (c.durationSeconds || 0), 0);
+    const totalRevenuePaise = completedCalls.reduce((acc: number, c: any) => acc + (c.costPaise || 0), 0);
+    const webrtcCallsCount = completedCalls.filter((c: any) => c.callType === 'INTERNET_WEBRTC').length;
+    const pstnCallsCount = completedCalls.filter((c: any) => c.callType === 'TELECOM_PSTN').length;
 
     const providerInfo = getTelephonyProvider().getProviderInfo();
 
@@ -73,11 +73,11 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response, next) => {
     ]);
 
     // Fetch wallet balances for these users
-    const userIds = users.map(u => u._id);
+    const userIds = users.map((u: any) => u._id);
     const wallets = await Wallet.find({ userId: { $in: userIds } });
-    const walletMap = new Map(wallets.map(w => [w.userId.toString(), w.balancePaise]));
+    const walletMap = new Map(wallets.map((w: any) => [w.userId.toString(), w.balancePaise]));
 
-    const enrichedUsers = users.map(u => ({
+    const enrichedUsers = users.map((u: any) => ({
       id: u._id.toString(),
       username: u.username,
       email: u.email,
@@ -169,3 +169,4 @@ router.get('/calls', async (req: AuthenticatedRequest, res: Response, next) => {
 });
 
 export default router;
+

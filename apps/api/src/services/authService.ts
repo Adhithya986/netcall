@@ -154,7 +154,7 @@ export class AuthService {
       }
 
       // Rotate token
-      user.refreshTokens = user.refreshTokens.filter(t => t !== token);
+      user.refreshTokens = user.refreshTokens.filter((t: string) => t !== token);
       const newTokens = generateTokens(user);
       user.refreshTokens.push(newTokens.refreshToken);
       await user.save();
@@ -169,7 +169,7 @@ export class AuthService {
     const user = await User.findById(userId);
     if (user) {
       if (refreshToken) {
-        user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
+        user.refreshTokens = user.refreshTokens.filter((t: string) => t !== refreshToken);
       } else {
         user.refreshTokens = [];
       }

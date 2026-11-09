@@ -69,3 +69,4 @@ describe('Wallet, Plans & Transaction Ledger API', () => {
     expect(latestTx.balanceAfterPaise).toBe(75000);
   });
 });
+

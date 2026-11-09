@@ -62,3 +62,4 @@ export const config = {
     internetRatePerMinutePaise: parseInt(process.env.INTERNET_CALL_RATE_PAISE_PER_MIN || '0', 10) // ₹0
   }
 };
+

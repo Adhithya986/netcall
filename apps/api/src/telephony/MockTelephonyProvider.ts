@@ -110,3 +110,4 @@ export class MockTelephonyProvider implements ITelephonyProvider {
     };
   }
 }
+
