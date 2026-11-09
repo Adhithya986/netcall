@@ -1,0 +1,35 @@
+# Multi-stage Dockerfile for NetCall API Server
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root workspace configuration
+COPY package.json package-lock.json* ./
+COPY tsconfig.base.json ./
+
+# Copy packages and apps
+COPY packages/shared ./packages/shared
+COPY apps/api ./apps/api
+
+# Install and build
+RUN npm ci
+RUN npm run build --workspace=@netcall/shared
+RUN npm run build --workspace=@netcall/api
+
+# Production Runner
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json* ./
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+
+RUN npm ci --omit=dev
+
+EXPOSE 5000
+
+CMD ["node", "apps/api/dist/index.js"]

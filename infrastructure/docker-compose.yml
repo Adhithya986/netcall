@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: netcall-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - netcall-net
+
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.api
+    container_name: netcall-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/netcall
+      - FRONTEND_URL=http://localhost
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:5173
+      - JWT_ACCESS_SECRET=netcall_prod_access_secret_32chars_long_key!
+      - JWT_REFRESH_SECRET=netcall_prod_refresh_secret_32chars_long_key!
+      - TELEPHONY_PROVIDER=MOCK
+      - TELEPHONY_SANDBOX_MODE=true
+    depends_on:
+      - mongodb
+    networks:
+      - netcall-net
+
+  web:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.web
+    container_name: netcall-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - netcall-net
+
+  coturn:
+    image: coturn/coturn:latest
+    container_name: netcall-turn
+    restart: unless-stopped
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    volumes:
+      - ./turnserver.conf:/etc/turnserver.conf:ro
+    networks:
+      - netcall-net
+
+volumes:
+  mongo_data:
+
+networks:
+  netcall-net:
+    driver: bridge
