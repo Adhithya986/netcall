@@ -36,7 +36,12 @@ export const initiateCallSchema = z.object({
     .regex(/^\+?[1-9]\d{7,14}$/, 'Invalid phone number format. Use E.164 e.g. +919876543210')
     .optional()
 }).refine(
-  (data) => {
+  (data: {
+    callType: 'INTERNET_WEBRTC' | 'TELECOM_PSTN';
+    targetUserId?: string;
+    targetUsername?: string;
+    destinationNumber?: string;
+  }) => {
     if (data.callType === 'INTERNET_WEBRTC') {
       return Boolean(data.targetUserId || data.targetUsername);
     }
