@@ -11,14 +11,15 @@
     "dev": "concurrently -n \"API,WEB\" -c \"cyan,green\" \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run dev --workspace=@netcall/api",
     "dev:web": "npm run dev --workspace=@netcall/web",
-    "build": "npm install && npm run build --workspace=@netcall/shared && npm run build --workspace=@netcall/api && npm run build --workspace=@netcall/web",
+    "build": "npm install --include=dev && npm run build --workspace=@netcall/shared && npm run build --workspace=@netcall/api && npm run build --workspace=@netcall/web",
     "test": "npm run test --workspaces --if-present",
     "seed": "npm run seed --workspace=@netcall/api",
     "start": "npm run start --workspace=@netcall/api"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
+  "dependencies": {
     "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
-
